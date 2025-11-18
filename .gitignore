@@ -36,7 +36,6 @@ frontend/.vite/
 # Render Deployment
 # ========================================
 # Render caches, build artifacts, or tmp logs
-render.yaml
 tmp/
 .cache/
 build.log
