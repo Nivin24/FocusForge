@@ -1,4 +1,7 @@
 services:
+  # ===========================
+  # BACKEND (Flask + ChromaDB)
+  # ===========================
   - type: web
     name: focusforge
     env: python
@@ -20,10 +23,19 @@ services:
         fromSecret: GOOGLE_API_KEY
       CHROMA_DB_PATH: /data/chroma_db
       
-  - type: static
+  # ===========================
+  # FRONTEND (React Static Site)
+  # ===========================
+  - type: web              # ❗ MUST BE web (NOT static)
     name: focusforge-frontend
+    env: static            # ← THIS MAKES IT A STATIC SITE
+    region: singapore
+    plan: free
+    branch: main
     rootDir: frontend
+
     buildCommand: npm install && npm run build
     publishDir: dist
+
     envVars:
-      REACT_APP_API_URL: https://focusforge-backend.onrender.com
+      REACT_APP_API_URL: https://focusforge-backend.onrender.com   # UPDATE AFTER DEPLOY
