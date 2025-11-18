@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: focusforge
+    env: python
+    region: singapore        # Best for India!
+    plan: free                # Upgrade to starter later ($7/month)
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --timeout 120
+
+    # PERSISTENT STORAGE — EVERY USER'S NOTES SAVED FOREVER
+    disks:
+      - name: chroma-db
+        mountPath: /data
+        sizeGB: 1
+
+    envVars:
+      GOOGLE_API_KEY: 
+        fromSecret: GOOGLE_API_KEY
+      CHROMA_DB_PATH: /data/chroma_db
+      
+  - type: static
+    name: focusforge-frontend
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    envVars:
+      REACT_APP_API_URL: https://focusforge-backend.onrender.com
