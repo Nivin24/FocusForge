@@ -1,12 +1,11 @@
 services:
-  # ===========================
-  # BACKEND: Flask + ChromaDB
-  # ===========================
+  # ============================
+  # BACKEND: Flask API + Chroma
+  # ============================
   - type: web
     name: focusforge-backend
-    plan: free
     env: python
-    region: singapore
+    plan: free
     branch: main
     rootDir: backend
 
@@ -17,23 +16,17 @@ services:
       - key: FLASK_ENV
         value: production
       - key: CHROMA_DB_PATH
-        value: /data/chroma_db
+        value: ./chroma_db              # NO PERSISTENCE on free tier
       - key: GOOGLE_API_KEY
         fromSecret: GOOGLE_API_KEY
 
-    disk:
-      name: chroma-db
-      mountPath: /data
-      sizeGB: 1
-
-  # ===========================
+  # ============================
   # FRONTEND: React Static Site
-  # ===========================
+  # ============================
   - type: web
     name: focusforge-frontend
+    env: static              # 🚨 static must be set here 
     plan: free
-    env: static
-    region: singapore
     branch: main
     rootDir: frontend
 
@@ -42,4 +35,4 @@ services:
 
     envVars:
       - key: REACT_APP_API_URL
-        value: https://focusforge-backend.onrender.com   # UPDATE AFTER DEPLOY
+        value: https://focusforge-backend.onrender.com
