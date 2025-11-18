@@ -1,0 +1,56 @@
+# ========================================
+# Backend
+# ========================================
+backend/uploads/*
+backend/instance/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+backend/venv/
+backend/focusforgeenv/
+
+# ChromaDB (Vector store)
+backend/chroma_db/
+backend/*.db
+backend/.chroma/
+backend/**/chroma-*
+*.chromadb/
+
+# Flask SQLite DB (if used)
+backend/app.db
+
+# ========================================
+# Frontend
+# ========================================
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.vscode/
+
+# Frontend build output
+frontend/dist/
+# Vite cache (if using Vite)
+frontend/.vite/
+
+# ========================================
+# Render Deployment
+# ========================================
+# Render caches, build artifacts, or tmp logs
+render.yaml
+tmp/
+.cache/
+build.log
+
+# ========================================
+# Mac junk
+.DS_Store
+
+# General Python cache
+*.py[cod]
+__pycache__/
+*.so
+*.pyo
+*.pyd
+
+# Logs
+*.log
