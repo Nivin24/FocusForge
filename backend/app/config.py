@@ -21,7 +21,8 @@ class Config:
     ALLOWED_EXTENSIONS = {'pdf', 'txt', 'md'}
 
     # Chroma DB path
-    CHROMA_DB_PATH = os.path.join(basedir, 'chroma_db')
+    # CHROMA_DB_PATH = os.path.join(basedir, 'chroma_db') # development
+    CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH", "./chroma_db") # production
 
     @staticmethod
     def init_app(app):
