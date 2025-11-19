@@ -1,6 +1,9 @@
 from app import create_app
 import os
 
+# THIS IS THE FIX — GLOBAL USER CACHE FOR ALL USERS
+user_rags = {}
+
 app = create_app()
 
 if __name__ == "__main__":

@@ -2,7 +2,10 @@ from flask import Flask
 from flask_cors import CORS
 import os
 
-from .routes import api_bp, user_rags  # Import user_rags so it's created at startup
+# GLOBAL USER CACHE — MUST BE HERE
+user_rags = {}
+
+from .routes import api_bp
 
 def create_app():
     app = Flask(__name__, static_folder='../../frontend/dist', static_url_path='/')

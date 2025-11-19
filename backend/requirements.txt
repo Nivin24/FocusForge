@@ -14,3 +14,4 @@ aiohttp==3.11.14
 fastapi[all]==0.115.0   # optional if you want async later
 uvicorn==0.32.0
 gunicorn
+# pypdf
