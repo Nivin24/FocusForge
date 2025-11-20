@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import { Upload,Search, FileText, X, Send, Sparkles, Trash2 } from 'lucide-react';
-import { BookOpen, Zap, HelpCircle, Map, Lightbulb, Trophy } from 'lucide-react';
+import { BookOpen, Zap, HelpCircle, Map, Mic, Lightbulb, Trophy, Volume2, VolumeX } from 'lucide-react';
 
 interface Message {
   type: 'user' | 'ai' | 'system';
@@ -33,6 +33,135 @@ const userId = getUserId();
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [autoSpeak, setAutoSpeak] = useState(true); // default ON (most users love it)
+  const modeLabels: Record<string, string> = {
+    study: "Study Focus",
+    quick: "Quick Revision",
+    quiz: "Quiz Master",
+    roadmap: "Roadmap Builder",
+    doubt: "Doubt Solver",
+    strategy: "Exam Strategy"
+  };
+
+  const [isListening, setIsListening] = useState(false);
+  const [transcript, setTranscript] = useState('');
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-IN';
+
+    let finalTranscript = '';
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcriptPart = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcriptPart + ' ';
+        } else {
+          interimTranscript += transcriptPart;
+        }
+      }
+
+      setTranscript(finalTranscript + interimTranscript);
+
+      // Auto-send when user says "send", "go", "submit"
+      const lower = (finalTranscript + interimTranscript).toLowerCase();
+      if (lower.includes('send') || lower.includes('go') || lower.includes('submit')) {
+        stopListening();
+        setUserMsg(finalTranscript.replace(/send|go|submit/gi, '').trim());
+        sendMessage();
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.log("Speech error:", event.error);
+      if (event.error === 'not-allowed') {
+        alert("Microphone access denied");
+      }
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      // THIS IS THE KEY FIX: Restart if user was still listening
+      if (isListening) {
+        recognition.start(); // ← PREVENTS RANDOM STOPPING
+      }
+      setIsListening(false);
+    };
+
+    return () => {
+      recognition.stop();
+    };
+  }, [isListening]); // ← Restart when isListening changes
+
+
+  // ADD THIS useEffect — FIX VOICE LOADING
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      const loadVoices = () => {
+        window.speechSynthesis.getVoices();
+      };
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
+    }
+  }, []);
+
+  // Start & Stop Functions
+  const startListening = () => {
+    if (recognitionRef.current) {
+      setTranscript('');
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  const speakAnswer = (text: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Stop any current speech
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.95;
+      utterance.pitch = 1.1;
+      
+      // Try to get Indian/British female voice
+      const voices = window.speechSynthesis.getVoices();
+      const preferredVoice = voices.find(v => 
+        v.name.includes('Google UK English Female')  // ||
+        // v.name.includes('Google हिन्दी') ||
+        // v.lang.includes('en-IN') ||
+        // v.lang.includes('en-GB')
+      );
+      
+      if (preferredVoice) utterance.voice = preferredVoice;
+
+      utterance.onend = () => console.log("Finished speaking");
+      utterance.onerror = (e) => console.log("Speech error:", e);
+
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+      if (transcript.trim()) {
+        setUserMsg(transcript.trim());
+      }
+    }
+  };
   
 
   // Load files on start → then decide what message to show
@@ -173,6 +302,11 @@ export default function App() {
         text: res.data.answer,
         sources: res.data.sources || []
       }]);
+
+      // ONLY SPEAK IF USER WANTS
+      if (autoSpeak) {
+        speakAnswer(res.data.answer);
+      }
 
     } catch (err: any) {
       setMessages(prev => [...prev, {
@@ -505,6 +639,8 @@ export default function App() {
                 </button>
               ))}
             </div>
+            {/* AUTO-SPEAK TOGGLE — PREMIUM LOOK */}
+
 
             {/* CURRENT MODE INDICATOR */}
             <div className="text-center mb-3">
@@ -521,31 +657,82 @@ export default function App() {
               </p>
             </div>
 
-              {/* INPUT + SEND */}
-              <div className="flex gap-3">
-              <input
-                type="text"
-                value={userMsg}
-                onChange={(e) => setUserMsg(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
-                placeholder={`Ask in ${
-                  selectedMode === "study" ? "Study Focus" :
-                  selectedMode === "quick" ? "Quick Revision" :
-                  selectedMode === "quiz" ? "Quiz Master" :
-                  selectedMode === "roadmap" ? "Roadmap Builder" :
-                  selectedMode === "doubt" ? "Doubt Solver" :
-                  "Exam Strategy"
-                } mode...`}
-                className="flex-1 bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-5 py-4 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 transition"
-              />
+            {/* FINAL PREMIUM INPUT BAR — MIC + AUTO-SPEAK + SEND */}
+            <div className="flex items-center gap-4 px-1">
+
+              {/* AUTO-SPEAK TOGGLE */}
+              <button
+                onClick={() => setAutoSpeak(!autoSpeak)}
+                className={`p-3 rounded-xl transition-all transform hover:scale-110 ${
+                  autoSpeak
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg shadow-purple-500/30'
+                    : 'bg-white/10 hover:bg-white/20'
+                }`}
+                title={autoSpeak ? "Auto-speak ON" : "Auto-speak OFF"}
+              >
+                {autoSpeak ? (
+                  <Volume2 className="w-6 h-6 text-white" />
+                ) : (
+                  <VolumeX className="w-6 h-6 text-gray-400" />
+                )}
+              </button>
+
+              {/* TEXT INPUT WITH MIC INSIDE */}
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={userMsg}
+                  onChange={(e) => setUserMsg(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()}
+                  placeholder={`Ask in ${modeLabels[selectedMode]} mode...`}
+                  className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-5 py-4 pr-16 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 transition"
+                />
+
+                {/* MIC BUTTON INSIDE INPUT */}
+                <button
+                  onClick={isListening ? stopListening : startListening}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 p-3 rounded-lg transition-all ${
+                    isListening
+                      ? 'bg-red-500/30 animate-pulse'
+                      : 'bg-white/20 hover:bg-white/30'
+                  }`}
+                >
+                  {isListening ? (
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-red-400 rounded-full animate-ping opacity-75"></div>
+                      <Mic className="w-5 h-5 text-red-300 relative z-10" />
+                    </div>
+                  ) : (
+                    <Mic className="w-5 h-5 text-purple-300" />
+                  )}
+                </button>
+              </div>
+
+              {/* SEND BUTTON */}
               <button
                 onClick={sendMessage}
-                disabled={!userMsg.trim() || asking}
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-medium hover:from-purple-500 hover:to-pink-500 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
+                disabled={(!userMsg.trim() && !transcript) || asking}
+                className={`p-4 rounded-xl transition-all transform hover:scale-105 ${
+                  (!userMsg.trim() && !transcript) || asking
+                    ? 'bg-white/10 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg hover:from-purple-500 hover:to-pink-500'
+                }`}
               >
-                <Send className="w-5 h-5" />
+                {asking ? (
+                  <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <Send className="w-6 h-6 text-white" />
+                )}
               </button>
             </div>
+
+            {/* LIVE TRANSCRIPTION */}
+            {isListening && (
+              <div className="mt-3 p-4 bg-white/5 backdrop-blur-xl rounded-xl border border-purple-500/30 text-center animate-pulse">
+                <p className="text-purple-300 text-sm">Listening...</p>
+                <p className="text-white text-lg font-medium mt-1">{transcript || "Speak now..."}</p>
+              </div>
+            )}
           </div>
 
         </div>

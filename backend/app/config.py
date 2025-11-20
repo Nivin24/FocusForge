@@ -20,7 +20,6 @@ class Config:
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50 MB max file size
     ALLOWED_EXTENSIONS = {'pdf', 'txt', 'md'}
 
-    # Chroma DB path
     # CHROMA_DB_PATH = os.path.join(basedir, 'chroma_db') # development
     CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH", "./chroma_db") # production
 

@@ -93,7 +93,6 @@ class FocusForgeRAG:
             except Exception as e:
                 print(f"⚠ Model {model_name} failed with error: {e}")
 
-                # Optionally log errors here (e.g., to cloud or file)
                 continue  # Try next model
 
         return "❌ All models failed. Please try again later."
@@ -103,7 +102,6 @@ class FocusForgeRAG:
         source_name = original_filename
         upload_time_ist = datetime.now(IST).strftime("%d %b %Y, %I:%M %p")
 
-        # FIXED: Use correct Chroma .get() syntax (no "ids" in include)
         existing = self.collection.get(
             where={"source": source_name},
             include=["metadatas"]  # Only need metadatas to get IDs
