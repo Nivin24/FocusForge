@@ -1,6 +1,6 @@
 // frontend/src/App.tsx
 // FINAL WORKING VERSION — Private User ID + YouTube Cards + No Errors
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import { Upload,Search, FileText, X, Send, Sparkles, Trash2 } from 'lucide-react';
