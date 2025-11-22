@@ -54,3 +54,7 @@ def create_app():
         return jsonify({"error": "Internal server error"}), 500
 
     return app
+
+    @app.route('/favicon.ico')
+    def favicon():
+        return '', 204  # No content → no error

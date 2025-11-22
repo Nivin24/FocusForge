@@ -10,8 +10,9 @@ langchain-community
 langchain-text-splitters
 langchain-google-genai
 langchain-groq
-langchain-openai
-
+langchain-openain
+sentence-transformers
+torch
 # --- PDF loading ---
 pypdf          # for langchain_community.document_loaders.PyPDFLoader
 
