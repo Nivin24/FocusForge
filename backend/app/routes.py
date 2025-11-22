@@ -9,12 +9,15 @@ api_bp = Blueprint('api', __name__)
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Access user_rags via current_app — THIS IS THE CORRECT WAY
-user_rags = property(lambda: current_app.user_rags)
+# CORRECT WAY — GET user_rags FROM current_app EVERY TIME
+def get_rags():
+    return current_app.user_rags
 
 
 @api_bp.route('/upload', methods=['POST'])
 def upload_file():
+    user_rags = get_rags()
+
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
 
@@ -49,15 +52,19 @@ def upload_file():
 
 @api_bp.route('/files', methods=['GET'])
 def get_uploaded_files():
+    user_rags = get_rags()
     user_id = request.args.get('user_id', 'demo')
+
     if user_id not in user_rags:
         user_rags[user_id] = FocusForgeRAG(user_id)
+
     files = user_rags[user_id].get_file_history()
     return jsonify({"files": files})
 
 
 @api_bp.route('/ask', methods=['POST'])
 def ask_question():
+    user_rags = get_rags()
     try:
         data = request.get_json() or {}
         question = data.get('question', '').strip()
@@ -72,20 +79,21 @@ def ask_question():
             return jsonify({"answer": "No notes uploaded yet. Upload a PDF or text file first!", "sources": [], "used_web": False})
 
         result = user_rags[user_id].ask(question, mode=mode)
-        if "not in notes yet" in result["answer"].lower():
+        if "not in notes" in result["answer"].lower():
             result["sources"] = []
 
         return jsonify(result)
 
     except Exception as e:
-        print(f"Ask route error: {e}")
+        print(f"Ask error: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({"answer": "Sorry, something went wrong.", "sources": [], "used_web": False}), 500
+        return jsonify({"answer": "Server error, try again.", "sources": []}), 500
 
 
 @api_bp.route('/delete_file', methods=['POST'])
 def delete_file():
+    user_rags = get_rags()
     try:
         data = request.get_json() or {}
         user_id = data.get('user_id', 'demo')
@@ -98,15 +106,13 @@ def delete_file():
             user_rags[user_id] = FocusForgeRAG(user_id=user_id)
 
         result = user_rags[user_id].collection.get(where={"source": filename}, include=["metadatas"])
-        ids_to_delete = result.get("ids", [])
-        if ids_to_delete:
-            user_rags[user_id].collection.delete(ids=ids_to_delete)
-            return jsonify({"success": True, "message": "File deleted"}), 200
+        ids = result.get("ids", [])
+        if ids:
+            user_rags[user_id].collection.delete(ids=ids)
+            return jsonify({"success": True, "message": "Deleted"}), 200
 
-        return jsonify({"message": "File not found"}), 404
+        return jsonify({"message": "Not found"}), 404
 
     except Exception as e:
-        print(f"DELETE ERROR: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Delete error: {e}")
         return jsonify({"error": str(e)}), 500
