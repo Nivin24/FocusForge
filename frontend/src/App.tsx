@@ -228,9 +228,9 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    loadFileHistory();
-  }, []);
+  // useEffect(() => {
+  //   loadFileHistory();
+  // }, []);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -246,28 +246,36 @@ export default function App() {
   const onDrop = async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
 
+    const file = acceptedFiles[0];
     const formData = new FormData();
-    acceptedFiles.forEach(file => formData.append('file', file));
+    formData.append("file", file);
 
     try {
-      const res = await axios.post(`${API_URL}/api/upload`, formData, {
-        params: { user_id: userId }
-      });
+      const response = await axios.post(
+        `${API_URL}/api/upload?user_id=${userId}`,
+        formData,
+        {
+          timeout: 180000,
+          // NO HEADERS — THIS IS CORRECT
+        }
+      );
 
-      const action = res.data.action === "replaced" ? "Updated" : "Added";
-      const filename = res.data.filename;
-      const time = res.data.uploaded_at;
+      const { filename, action } = response.data;
+      const actionText = action === "replaced" ? "Updated" : "Uploaded";
 
-      setMessages(prev => [...prev, { 
-        type: 'system', 
-        text: `${action}: ${filename} • ${time}` 
+      setMessages(prev => [...prev, {
+        type: "system",
+        text: `${actionText}: ${filename}`,
       }]);
 
       loadFileHistory();
 
     } catch (err: any) {
-      const errorMsg = err.response?.data?.error || err.message || "Upload failed";
-      setMessages(prev => [...prev, { type: 'system', text: `Upload failed: ${errorMsg}` }]);
+      console.error("Upload error:", err);
+      setMessages(prev => [...prev, {
+        type: "system",
+        text: `Upload failed: ${err.message}`,
+      }]);
     }
   };
 
@@ -277,7 +285,9 @@ export default function App() {
       'application/pdf': ['.pdf'], 
       'text/plain': ['.txt'],
       'text/markdown': ['.md']
-    }
+    },
+    multiple: false,
+    maxSize: 100 * 1024 * 1024, // 100MB limit
   });
 
   const sendMessage = async () => {

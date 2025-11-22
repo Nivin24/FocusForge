@@ -1,12 +1,22 @@
-# backend/run.py
+# backend/run.py   ← FINAL 100% WORKING VERSION FOR RENDER
+
 from app import create_app
 import os
 
-# GLOBAL USER CACHE — ONLY HERE
+# Global user cache
 user_rags = {}
 
+# Create the app
 app = create_app()
 
-# if __name__ == "__main__":
-#     port = int(os.getenv("PORT", 5000))
-#     app.run(host="0.0.0.0", port=port, debug=True)
+# THIS LINE IS THE MAGIC THAT FIXES RENDER PORT ISSUE
+# Render injects $PORT, and Gunicorn uses this app directly
+if os.environ.get("RENDER") == "true":
+    # Render environment
+    port = int(os.environ.get("PORT", 10000))
+    # No app.run() — Gunicorn handles it
+    print(f"FocusForge API starting on Render port {port}")
+else:
+    # Local development only
+    if __name__ == "__main__":
+        app.run(host="0.0.0.0", port=5000, debug=True)

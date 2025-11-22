@@ -22,10 +22,14 @@ def create_app():
                 "http://127.0.0.1:5173",
                 "https://focusforgeai.vercel.app"
             ],
-            "supports_credentials": True
+            "methods": ["GET", "POST", "OPTIONS", "DELETE"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "expose_headers": ["Content-Type", "X-Requested-With"],
+            "supports_credentials": True,
+            "max_age": 600
         }}
     )
-
+    app.config['CORS_EXPOSE_HEADERS'] = 'Content-Type'
     # Register API routes
     app.register_blueprint(api_bp, url_prefix='/api')
 
