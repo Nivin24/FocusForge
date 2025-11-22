@@ -33,7 +33,7 @@ const userId = getUserId();
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [autoSpeak, setAutoSpeak] = useState(true); // default ON (most users love it)
+  const [autoSpeak, setAutoSpeak] = useState(false); // default ON (most users love it)
   const modeLabels: Record<string, string> = {
     study: "Study Focus",
     quick: "Quick Revision",
