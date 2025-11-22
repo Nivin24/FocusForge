@@ -26,6 +26,9 @@ const getUserId = (): string => {
   }
   return id;
 };
+const API_URL = import.meta.env.DEV 
+  ? "http://127.0.0.1:5000" 
+  : "https://focusforge-9pov.onrender.com";
 
 const userId = getUserId();
 
@@ -168,7 +171,7 @@ export default function App() {
   useEffect(() => {
     const initialize = async () => {
       try {
-        const res = await axios.get('https://focusforge-9pov.onrender.com/api/files', {
+        const res = await axios.get(`${API_URL}/api/files`, {
           params: { user_id: userId }
         });
         const files = res.data.files || [];
@@ -216,7 +219,7 @@ export default function App() {
   // Load file history for THIS user only
   const loadFileHistory = async () => {
     try {
-      const res = await axios.get('https://focusforge-9pov.onrender.com/api/files', {
+      const res = await axios.get(`${API_URL}/api/files`, {
         params: { user_id: userId }
       });
       setUploadedFiles(res.data.files || []);
@@ -247,7 +250,7 @@ export default function App() {
     acceptedFiles.forEach(file => formData.append('file', file));
 
     try {
-      const res = await axios.post('https://focusforge-9pov.onrender.com/api/upload', formData, {
+      const res = await axios.post(`${API_URL}/api/upload`, formData, {
         params: { user_id: userId }
       });
 
@@ -290,7 +293,7 @@ export default function App() {
     setAsking(true);  // This triggers your existing loading animation at bottom
 
     try {
-      const res = await axios.post('https://focusforge-9pov.onrender.com/api/ask', {
+      const res = await axios.post(`${API_URL}/api/ask`, {
         question: questionText,
         user_id: userId,
         mode: selectedMode
@@ -459,7 +462,7 @@ export default function App() {
                 <button
                   onClick={async () => {
                     try {
-                      await axios.post('https://focusforge-9pov.onrender.com/api/delete_file', {
+                      await axios.post(`${API_URL}/api/delete_file`, {
                         user_id: userId,
                         filename: deleteCandidate.filename
                       });
