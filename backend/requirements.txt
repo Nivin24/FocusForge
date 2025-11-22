@@ -1,51 +1,21 @@
-# --- Web framework & server ---
-Flask==3.1.2
-Flask-Login==0.6.3 
-Flask-Cors==6.0.1
-gunicorn==23.0.0
-uvicorn==0.38.0
-# Fast API
-fastapi[all]==0.115.0
+# --- Core web backend ---
+Flask
+Flask-Cors
+gunicorn
 
-# --- LangChain + ecosystem ---
-langchain==1.0.7
-langchain-community==0.4.1
-langchain-core==1.0.5
-langchain-ollama==1.0.0
-langchain-tavily==0.2.13
-langgraph==1.0.3
-langgraph-checkpoint==3.0.1
-langgraph-prebuilt==1.0.4
-langgraph-sdk==0.2.9
-langsmith==0.4.43
-# --- Vector stores / RAG infra ---
-chromadb==1.3.4
-qdrant-client==1.15.1
-# --- PDF & file handling ---
-pypdf==6.3.0
-python-dotenv==1.2.1
-# --- Models & embeddings ---
-sentence-transformers==5.1.2
-transformers==4.57.1
-torch==2.9.1
-tiktoken==0.12.0
-huggingface-hub==0.36.0
-safetensors==0.6.2
-# --- API clients for LLMs ---
-openai==2.8.1
-groq==0.34.1
-google-generativeai==0.8.5
-google-ai-generativelanguage==0.6.15
-langchain-google-genai==2.0.10
-langchain-groq==1.0.1
-langchain-openai==1.0.3
-langchain-openrouter==0.0.1
-langchain-ollama==1.0.0
-# --- HTTP, async, and networking ---
-requests==2.32.5
-aiohttp==3.13.2
-httpx==0.28.1
-httpx-sse==0.4.3
-websocket-client==1.9.0
-websockets==15.0.1
-# sentence-transformers==3.1.1
+# --- RAG / LangChain stack ---
+chromadb
+langchain
+langchain-community
+langchain-text-splitters
+langchain-google-genai
+langchain-groq
+langchain-openai
+
+# --- PDF loading ---
+pypdf          # for langchain_community.document_loaders.PyPDFLoader
+
+# --- Utilities ---
+requests
+pytz
+python-dotenv  # if you read keys from .env
