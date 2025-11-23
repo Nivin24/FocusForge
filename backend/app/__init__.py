@@ -6,7 +6,7 @@ from .routes import api_bp
 def create_app():
     app = Flask(__name__)
     app.config.from_object('config.Config')
-    from backend.run import user_rags
+    from run import user_rags
     app.user_rags = user_rags
 
     # CORS — Allow Vercel frontend
