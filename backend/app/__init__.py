@@ -1,5 +1,5 @@
 # backend/app/__init__.py
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 # from flask_cors import CORS
 from .routes import api_bp
 
@@ -52,12 +52,13 @@ def create_app():
     @app.before_request
     def handle_preflight():
         if request.method == "OPTIONS":
-            response = Flask.make_response(__name__)
-            response.headers['Access-Control-Allow-Origin'] = 'https://focusforgeai.vercel.app'
+            response = make_response("", 200)
+            response.headers['Access-Control-Allow-Origin'] = request.headers.get(
+                'Origin', 'https://focusforgeai.vercel.app'
+            )
             response.headers['Access-Control-Allow-Credentials'] = 'true'
             response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
             response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
-            response.status_code = 200
             return response
     
     # Register API routes
