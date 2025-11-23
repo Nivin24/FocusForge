@@ -1,19 +1,20 @@
-# backend/run.py   ← FINAL 100% WORKING VERSION FOR RENDER
-
+# backend/run.py
 from app import create_app
 import os
 
 # Global user cache
 user_rags = {}
-
-# Create the app
 app = create_app()
 
-if os.environ.get("RENDER") == "true":
+# THIS IS THE MAGIC THAT RENDER LOVES
+# Gunicorn imports this file → we bind immediately
+if os.environ.get("RENDER"):
     # Render environment
+    import gunicorn.app.wsgiapp
+    import sys
     port = int(os.environ.get("PORT", 10000))
-    # No app.run() — Gunicorn handles it
-    print(f"FocusForge API starting on Render port {port}")
+    sys.argv = ["gunicorn", f"--bind=0.0.0.0:{port}", "run:app"]
+    gunicorn.app.wsgiapp.run()
 else:
     # Local development only
     if __name__ == "__main__":
