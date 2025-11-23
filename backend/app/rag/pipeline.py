@@ -2,7 +2,7 @@
 # FINAL VERSION — Nov 18, 2025 | Duplicate Replace + IST Time + File History
 import os
 import chromadb
-from chromadb.utils import embedding_functions
+from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
@@ -31,7 +31,7 @@ class FocusForgeRAG:
         self.client = chromadb.PersistentClient(path=self.db_path)
         self.collection = self.client.get_or_create_collection(
             name="notes",
-            embedding_function=embedding_functions.SentenceTransformerEmbeddingFunction(
+            embedding_function=SentenceTransformerEmbeddingFunction(
                 model_name="all-MiniLM-L6-v2"
             ),
             metadata={"hnsw:space": "cosine"}
