@@ -33,11 +33,13 @@ def create_app():
     @app.after_request
     def add_cors_headers(response):
         origin = request.headers.get('Origin')
-        if origin in [
+        allowed_origins = [
             'http://localhost:5173',
             'http://127.0.0.1:5173',
             'https://focusforgeai.vercel.app'
-        ]:
+        ]
+
+        if origin in allowed_origins:
             response.headers['Access-Control-Allow-Origin'] = origin
         else:
             response.headers['Access-Control-Allow-Origin'] = 'https://focusforgeai.vercel.app'
@@ -46,20 +48,13 @@ def create_app():
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
         response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
         response.headers['Access-Control-Expose-Headers'] = 'Content-Type'
-        return response
 
-    # Handle preflight requests
-    @app.before_request
-    def handle_preflight():
-        if request.method == "OPTIONS":
-            response = make_response("", 200)
-            response.headers['Access-Control-Allow-Origin'] = request.headers.get(
-                'Origin', 'https://focusforgeai.vercel.app'
-            )
-            response.headers['Access-Control-Allow-Credentials'] = 'true'
-            response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
-            response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
-            return response
+        # THIS IS THE NUCLEAR LINE — HANDLE OPTIONS HERE
+        if request.method == 'OPTIONS':
+            response.status_code = 200
+            response.data = ''  # Empty body
+
+        return response
     
     # Register API routes
     app.register_blueprint(api_bp, url_prefix='/api')

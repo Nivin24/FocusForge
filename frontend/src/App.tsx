@@ -255,7 +255,7 @@ export default function App() {
         `${API_URL}/api/upload?user_id=${userId}`,
         formData,
         {
-          timeout: 300000,
+          timeout: 300000, 
           // NO HEADERS — THIS IS CORRECT
         }
       );
