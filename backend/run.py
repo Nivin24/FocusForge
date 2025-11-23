@@ -9,8 +9,6 @@ user_rags = {}
 # Create the app
 app = create_app()
 
-# THIS LINE IS THE MAGIC THAT FIXES RENDER PORT ISSUE
-# Render injects $PORT, and Gunicorn uses this app directly
 if os.environ.get("RENDER") == "true":
     # Render environment
     port = int(os.environ.get("PORT", 10000))
