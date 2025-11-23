@@ -45,7 +45,6 @@ class FocusForgeRAG:
         #     convert_system_prompt_to_human=True
         # )
         self.llms = [
-            # Gemini - Primary
             ChatGoogleGenerativeAI(
                 model="gemini-2.5-flash",
                 google_api_key=os.getenv("GOOGLE_API_KEY"),
@@ -59,11 +58,9 @@ class FocusForgeRAG:
             # ),
             # OpenRouter - Additional Backup (example: Mistral or GPT-4)
             ChatOpenAI(
-                model="mistralai/mistral-7b-instruct",     # Any OpenRouter model
-                api_key=os.getenv("OPENROUTER_API_KEY"),   # Use standard `api_key`
-                base_url="https://openrouter.ai/api/v1",   # Required for OpenRouter
+                model="mistralai/mistral-7b-instruct",
                 temperature=0.3
-            ),
+            )
             # You can add more models here...
         ]
 
