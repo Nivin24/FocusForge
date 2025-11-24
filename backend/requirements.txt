@@ -1,6 +1,6 @@
 # --- Core web backend ---
 Flask
-Flask-Cors
+# Flask-Cors
 gunicorn
 
 # --- RAG / LangChain stack ---
