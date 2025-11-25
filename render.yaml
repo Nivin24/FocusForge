@@ -1,38 +1,14 @@
+# render.yaml — PERFECT FOR YOUR FASTAPI + VITE FOCUSFORGE APP
 services:
-  # ============================
-  # BACKEND: Flask API + Chroma
-  # ============================
   - type: web
-    name: focusforge-backend
+    name: focusforge-api
     env: python
-    plan: free
-    branch: main
-    rootDir: backend
-
+    region: oregon
+    plan: free        # or starter/pro if you want more RAM
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn run:app --bind 0.0.0.0:$PORT --timeout 120
-
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: FLASK_ENV
-        value: production
-      - key: CHROMA_DB_PATH
-        value: ./chroma_db              # NO PERSISTENCE on free tier
-      - key: GOOGLE_API_KEY
-        fromSecret: GOOGLE_API_KEY
-
-  # ============================
-  # FRONTEND: React Static Site
-  # ============================
-  - type: web
-    name: focusforge-frontend
-    env: static              # 🚨 static must be set here 
-    plan: free
-    branch: main
-    rootDir: frontend
-
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-
-    envVars:
-      - key: REACT_APP_API_URL
-        value: https://focusforge-9pov.onrender.com
+      # Optional: force Gemini 2.5 Flash (fastest + cheapest)
+      GEMINI_MODEL: models/gemini-2.5-flash
+      # If you want Hindi voice later
+      # GOOGLE_APPLICATION_CREDENTIALS: /etc/secrets/google.json
