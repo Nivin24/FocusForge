@@ -1,22 +1,16 @@
-# --- Core web backend ---
-Flask
-# Flask-Cors
+fastapi
+uvicorn[standard]
 gunicorn
-
-# --- RAG / LangChain stack ---
-chromadb
+chromadb==0.5.11
 langchain
 langchain-community
 langchain-text-splitters
 langchain-google-genai
-langchain-openai==1.0.3
+langchain-openai
 langchain-groq
 sentence-transformers
 torch
-# --- PDF loading ---
-pypdf          # for langchain_community.document_loaders.PyPDFLoader
-
-# --- Utilities ---
-requests
+pypdf
 pytz
-python-dotenv  # if you read keys from .env
+python-multipart
+werkzeug

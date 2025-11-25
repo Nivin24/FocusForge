@@ -57,10 +57,12 @@ class FocusForgeRAG:
             #     temperature=0.3
             # ),
             # OpenRouter - Additional Backup (example: Mistral or GPT-4)
-            ChatOpenAI(
-                model="mistralai/mistral-7b-instruct",
-                temperature=0.3
-            )
+            # ChatOpenAI(
+            #     model="mistralai/mistral-7b-instruct",
+            #     openai_api_key=os.getenv("OPENAI_API_KEY"),        # ← ADD THIS
+            #     openai_api_base="https://openrouter.ai/api/v1",    # ← ADD THIS
+            #     temperature=0.3
+            # )
             # You can add more models here...
         ]
 

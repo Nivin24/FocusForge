@@ -26,9 +26,8 @@ const getUserId = (): string => {
   }
   return id;
 };
-const API_URL = import.meta.env.DEV 
-  ? "http://127.0.0.1:5000" 
-  : "https://focusforge-9pov.onrender.com";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000" ;
+
 
 const userId = getUserId();
 
@@ -51,7 +50,8 @@ export default function App() {
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+      console.log("Browser doesn't support speech recognition");
       return;
     }
 
@@ -59,29 +59,28 @@ export default function App() {
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
 
-    recognition.continuous = true;
+    recognition.continuous = false;         // ← changed to false (fixes random stops)
     recognition.interimResults = true;
     recognition.lang = 'en-IN';
 
     let finalTranscript = '';
 
     recognition.onresult = (event: any) => {
-      let interimTranscript = '';
-
+      let interim = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcriptPart = event.results[i][0].transcript;
+        const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          finalTranscript += transcriptPart + ' ';
+          finalTranscript += transcript;
         } else {
-          interimTranscript += transcriptPart;
+          interim += transcript;
         }
       }
+      setTranscript(finalTranscript + interim);
 
-      setTranscript(finalTranscript + interimTranscript);
-
-      // Auto-send when user says "send", "go", "submit"
-      const lower = (finalTranscript + interimTranscript).toLowerCase();
-      if (lower.includes('send') || lower.includes('go') || lower.includes('submit')) {
+      // Auto-send on keywords
+      if (finalTranscript.toLowerCase().includes('send') || 
+          finalTranscript.toLowerCase().includes('go') ||
+          finalTranscript.toLowerCase().includes('submit')) {
         stopListening();
         setUserMsg(finalTranscript.replace(/send|go|submit/gi, '').trim());
         sendMessage();
@@ -89,25 +88,16 @@ export default function App() {
     };
 
     recognition.onerror = (event: any) => {
-      console.log("Speech error:", event.error);
-      if (event.error === 'not-allowed') {
-        alert("Microphone access denied");
-      }
+      console.log("Mic error:", event.error);
       setIsListening(false);
     };
 
     recognition.onend = () => {
-      // THIS IS THE KEY FIX: Restart if user was still listening
-      if (isListening) {
-        recognition.start(); // ← PREVENTS RANDOM STOPPING
-      }
       setIsListening(false);
     };
 
-    return () => {
-      recognition.stop();
-    };
-  }, [isListening]); // ← Restart when isListening changes
+    return () => recognition.stop();
+  }, []);
 
 
   // ADD THIS useEffect — FIX VOICE LOADING
@@ -122,11 +112,16 @@ export default function App() {
   }, []);
 
   // Start & Stop Functions
-  const startListening = () => {
-    if (recognitionRef.current) {
-      setTranscript('');
-      recognitionRef.current.start();
-      setIsListening(true);
+  const startListening = async () => {
+    try {
+      if (recognitionRef.current) {
+        setTranscript('');
+        await recognitionRef.current.start();
+        setIsListening(true);
+      }
+    } catch (err) {
+      alert("Please allow microphone access");
+      setIsListening(false);
     }
   };
 
@@ -157,23 +152,22 @@ export default function App() {
   };
 
   const stopListening = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-      if (transcript.trim()) {
-        setUserMsg(transcript.trim());
-      }
+  if (recognitionRef.current) {
+    recognitionRef.current.stop();
+    setIsListening(false);
+    // Only set message if there's actual text
+    if (transcript.trim()) {
+      setUserMsg(transcript.trim());
     }
-  };
+  }
+};
   
 
   // Load files on start → then decide what message to show
   useEffect(() => {
     const initialize = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/files`, {
-          params: { user_id: userId }
-        });
+        const res = await axios.get(`${API_URL}/api/files`, { params: { user_id: userId } })
         const files = res.data.files || [];
 
         setUploadedFiles(files);
@@ -219,9 +213,7 @@ export default function App() {
   // Load file history for THIS user only
   const loadFileHistory = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/files`, {
-        params: { user_id: userId }
-      });
+      const res = await axios.get(`${API_URL}/api/files`, { params: { user_id: userId } })
       setUploadedFiles(res.data.files || []);
     } catch (err) {
       console.log("No files yet for this user");
@@ -251,25 +243,17 @@ export default function App() {
     formData.append("file", file);
 
     try {
-      const response = await axios.post(
-        `${API_URL}/api/upload?user_id=${userId}`,
-        formData,
-        {
-          timeout: 300000, 
-          // NO HEADERS — THIS IS CORRECT
-        }
-      );
+      const response = await axios.post(`${API_URL}/api/upload`, formData, {
+        params: { user_id: userId },
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 300000
+      });
 
       const { filename, action } = response.data;
       const actionText = action === "replaced" ? "Updated" : "Uploaded";
 
-      setMessages(prev => [...prev, {
-        type: "system",
-        text: `${actionText}: ${filename}`,
-      }]);
-
-      loadFileHistory();
-
+      setMessages(prev => [...prev, { type: "system", text: `${actionText}: ${filename}` }]);
+      loadFileHistory()
     } catch (err: any) {
       console.error("Upload error:", err);
       setMessages(prev => [...prev, {
@@ -305,8 +289,8 @@ export default function App() {
     try {
       const res = await axios.post(`${API_URL}/api/ask`, {
         question: questionText,
-        user_id: userId,
-        mode: selectedMode
+        mode: selectedMode,
+        user_id: userId
       });
 
       // Directly add the real answer (no intermediate "Thinking..." bubble)
@@ -333,11 +317,11 @@ export default function App() {
 
   return (
     <>
-      <div className="flex h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+      <div className="flex h-screen bg-linear-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
         {/* LEFT SIDEBAR — FINAL PREMIUM VERSION */}
         <div className="w-80 bg-black/30 backdrop-blur-xl border-r border-white/10 flex flex-col">
           <div className="p-6 border-b border-white/10">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-linear-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
               FocusForge
             </h1>
             <p className="text-sm text-purple-200 mt-1">Your Personal RAG Study Assistant</p>
@@ -424,7 +408,7 @@ export default function App() {
 
                     {/* Delete Button */}
                     <button
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
                         setDeleteCandidate(file);
                       }}
@@ -472,15 +456,14 @@ export default function App() {
                 <button
                   onClick={async () => {
                     try {
-                      await axios.post(`${API_URL}/api/delete_file`, {
+                      const res = await axios.post(`${API_URL}/api/delete_file`, {
                         user_id: userId,
                         filename: deleteCandidate.filename
                       });
-                      setMessages(prev => [...prev, { type: 'system', text: `Deleted: ${deleteCandidate.filename}` }]);
-                      loadFileHistory();
-                    } catch (err) {
-                      alert("Delete failed. Check console.");
-                      console.error(err);
+                      setUploadedFiles(res.data.files || []);  // THIS LINE FIXES EVERYTHING
+                      setMessages(p => [...p, { type: 'system', text: `Deleted: ${deleteCandidate.filename}` }]);
+                    } catch {
+                      alert("Delete failed");
                     } finally {
                       setDeleteCandidate(null);
                     }
